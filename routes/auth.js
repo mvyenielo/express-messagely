@@ -5,7 +5,6 @@ const router = new Router();
 const { BadRequestError, UnauthorizedError } = require("../expressError");
 const jwt = require("jsonwebtoken");
 
-const Message = require("../models/message");
 const User = require("../models/user");
 const { SECRET_KEY } = require("../config");
 
@@ -19,7 +18,9 @@ router.post("/login", async function (req, res) {
   }
 
   await User.updateLoginTimestamp(username);
-  const token = jwt.sign(username, SECRET_KEY);
+
+  const payload = { username: username };
+  const token = jwt.sign(payload, SECRET_KEY);
 
   return res.json({ token });
 });
@@ -31,13 +32,14 @@ router.post("/login", async function (req, res) {
  * {username, password, first_name, last_name, phone} => {token}.
  */
 
-router.post("register", async function (req, res) {
+router.post("/register", async function (req, res) {
   if (req.body === undefined) throw new BadRequestError();
   const { username, password, first_name, last_name, phone } = req.body;
 
   await User.register({ username, password, first_name, last_name, phone });
 
-  const token = jwt.sign(username, SECRET_KEY);
+  const payload = { username: username };
+  const token = jwt.sign(payload, SECRET_KEY);
 
   return res.json({ token });
 });
