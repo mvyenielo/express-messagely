@@ -3,6 +3,8 @@
 const Router = require("express").Router;
 const router = new Router();
 
+const { authenticateJWT, ensureLoggedIn, ensureCorrectUser } = require("../middleware/auth");
+
 
 /** GET / - get list of users.
  *
@@ -10,12 +12,19 @@ const router = new Router();
  *
  **/
 
+router.get("/", async function (req, res) {
+  return await User.all();
+});
+
 
 /** GET /:username - get detail of users.
  *
  * => {user: {username, first_name, last_name, phone, join_at, last_login_at}}
  *
  **/
+router.get("/:username", async function (req, res) {
+  return await User.get(req.params.username);
+});
 
 
 /** GET /:username/to - get messages to user
