@@ -1,7 +1,9 @@
 "use strict";
 const bcrypt = require("bcrypt");
 const { BCRYPT_WORK_FACTOR } = require("../config");
-const { UnauthorizedError } = require("../expressError");
+const { UnauthorizedError, NotFoundError } = require("../expressError");
+
+const db = require("../db");
 
 /** User of the site. */
 
@@ -16,8 +18,14 @@ class User {
 
     const result = await db.query(
       `INSERT INTO users
-        (username, password, first_name, last_name, phone, join_at)
-        VALUES ($1, $2, $3, $4, $5, NOW())
+        (username,
+          password,
+          first_name,
+          last_name,
+          phone,
+          join_at,
+          last_login_at)
+        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
         RETURNING username, password, first_name, last_name, phone`,
       [username, hashedPassword, first_name, last_name, phone]
     );
@@ -42,7 +50,7 @@ class User {
       return await bcrypt.compare(password, user.password);
     }
 
-    throw new UnauthorizedError("Invalid user/password.");
+    return false;
   }
 
   /** Update last_login_at for user */
@@ -53,15 +61,15 @@ class User {
       `UPDATE users
         SET last_login_at = NOW()
         WHERE username = $1
-        RETURNING last_login_at`,
+        RETURNING username`,
       [username]
     );
 
-    if (result.rows[0]) { //FIXME: revisit?
-      return result.rows[0];
-    }
+    const user = result.rows[0];
 
-    throw new UnauthorizedError("Invalid user/password.");
+    if (!user) throw new NotFoundError(`${username} cannot be found.`);
+
+    return user;
   }
 
   /** All: basic info on all users:
@@ -87,17 +95,17 @@ class User {
 
   static async get(username) {
     const result = await db.query(
-      `SELECT username, first_name, last_name,phone, join_at, last_login_at
+      `SELECT username, first_name, last_name, phone, join_at, last_login_at
         FROM users
         WHERE username = $1`,
       [username]
     );
 
-    if (result.rows[0]) { //FIXME: revisit?
-      return result.rows[0];
-    }
+    const user = result.rows[0];
 
-    throw new UnauthorizedError("Invalid user/password.");
+    if (!user) throw new NotFoundError(`${username} cannot be found.`);
+
+    return user;
   }
 
   /** Return messages from this user.
@@ -112,21 +120,25 @@ class User {
 
     const results = await db.query(
       `SELECT m.id,
-        m.to_username,
-        m.body,
-        m.sent_at,
-        m.read_at,
-        t.first_name,
-        t.last_name,
-        t.phone
+              m.to_username,
+              m.body,
+              m.sent_at,
+              m.read_at,
+              t.first_name,
+              t.last_name,
+              t.phone
         FROM messages AS m
           JOIN users AS t ON m.to_username = t.username
         WHERE m.from_username = $1`,
       [username]
     );
 
-    return results.rows.map(m =>
-      m = {
+    const messages = results.rows;
+
+    if (!messages) throw new NotFoundError(`No messages found.`);
+
+    return messages.map(m => (
+      {
         id: m.id,
         to_user: {
           username: m.to_username,
@@ -137,7 +149,8 @@ class User {
         body: m.body,
         sent_at: m.sent_at,
         read_at: m.read_at
-      });
+      }
+    ));
   }
 
   /** Return messages to this user.
@@ -149,24 +162,27 @@ class User {
    */
 
   static async messagesTo(username) {
-
     const results = await db.query(
       `SELECT m.id,
-        m.from_username,
-        m.body,
-        m.sent_at,
-        m.read_at,
-        f.first_name,
-        f.last_name,
-        f.phone
+              m.from_username,
+              m.body,
+              m.sent_at,
+              m.read_at,
+              f.first_name,
+              f.last_name,
+              f.phone
         FROM messages AS m
           JOIN users AS f ON m.from_username = f.username
         WHERE m.to_username = $1`,
       [username]
     );
 
-    return results.rows.map(m =>
-      m = {
+    const messages = results.rows;
+
+    if (!messages) throw new NotFoundError(`No messages found.`);
+
+    return messages.map(m => (
+      {
         id: m.id,
         from_user: {
           username: m.from_username,
@@ -177,7 +193,8 @@ class User {
         body: m.body,
         sent_at: m.sent_at,
         read_at: m.read_at
-      });
+      }
+    ));
   }
 }
 
