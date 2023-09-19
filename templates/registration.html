@@ -1,9 +1,36 @@
 {% extends 'base.html' %}
 
-{% block title %} Messagely Registration {% end block %}
+{% block title %} Messagely Registration {% endblock %}
 {% block content %}
 <h1>Register for Messagely!</h1>
-<form method="POST">
+<form id='registerform'>
+  <div class="mb-3">
+    <label for="username">Username:</label>
+    <input id="username" class="form-control" name="username">
+  </div>
 
+  <div class="mb-3">
+    <label for="password">Password:</label>
+    <input id="password" class="form-control" name="password">
+  </div>
+
+  <div class="mb-3">
+    <label for="first_name">First Name:</label>
+    <input id="first_name" class="form-control" name="first_name">
+  </div>
+
+
+  <div class="mb-3">
+    <label for="last_name">Last Name:</label>
+    <input id="last_name" class="form-control" name="last_name">
+  </div>
+
+  <div class="mb-3">
+    <label for="phone">Phone:</label>
+    <input id="phone" class="form-control" name="phone">
+  </div>
+
+  <button id ="btn" class="btn btn-primary">Register</button>
 </form>
-{% end block %}
+
+{% endblock %}

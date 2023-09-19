@@ -1,5 +1,7 @@
 "use strict";
 
+
+
 /** Express app for message.ly. */
 
 
@@ -17,6 +19,14 @@ app.use(express.urlencoded());
 // allow connections to all routes from any browser
 app.use(cors());
 
+//nunjucks requirements
+const nunjucks = require("nunjucks");
+
+nunjucks.configure("templates", {
+  autoescape: true,
+  express: app,
+});
+
 // get auth token for all routes
 app.use(authenticateJWT);
 
@@ -25,10 +35,12 @@ app.use(authenticateJWT);
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
 const messageRoutes = require("./routes/messages");
+const frontendRoutes = require("./frontend");
 
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/messages", messageRoutes);
+app.use("/frontend", frontendRoutes);
 
 
 /** 404 handler: matches unmatched routes; raises NotFoundError. */
