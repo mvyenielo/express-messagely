@@ -35,8 +35,13 @@ router.post("/login", async function (req, res) {
 router.post("/register", async function (req, res) {
   if (req.body === undefined) throw new BadRequestError();
   const { username, password, first_name, last_name, phone } = req.body;
+  try {
+    await User.register({ username, password, first_name, last_name, phone });
+  }
+  catch {
+    throw new BadRequestError("Unable to register.");
+  }
 
-  await User.register({ username, password, first_name, last_name, phone });
 
   const payload = { username: username };
   const token = jwt.sign(payload, SECRET_KEY);
