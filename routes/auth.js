@@ -42,11 +42,11 @@ router.post("/register", async function (req, res) {
     throw new BadRequestError("Unable to register.");
   }
 
-
   const payload = { username: username };
   const token = jwt.sign(payload, SECRET_KEY);
 
   return res.json({ token });
 });
+
 
 module.exports = router;
